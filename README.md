@@ -1,7 +1,12 @@
 # 🤖 ML Supervisado · EAFIT 2026
 
 **Taller 02 — Aprendizaje Supervisado: Regresión & Clasificación**  
-Maestría en Ciencia de Datos · Docente: Jorge I. Padilla-Buriticá
+Maestría en Ciencia de Datos · Docente: Jorge I. Padilla-Buriticá · Período 2026-1
+
+**Integrantes:**
+- Ana Patricia Montes Pimienta
+- Karen Melissa Gómez Montoya
+- Juan Esteban Estrada Herrera
 
 ---
 
@@ -11,9 +16,9 @@ Maestría en Ciencia de Datos · Docente: Jorge I. Padilla-Buriticá
 ml_supervisado/
 ├── data/
 │   ├── raw/
-│   │   ├── insurance.csv                          ← Dataset regresión
-│   │   └── WA_Fn-UseC_-Telco-Customer-Churn.csv  ← Dataset clasificación
-│   └── processed/                                 ← Generado por notebooks
+│   │   ├── insurance.csv                          ← Dataset regresión (1,338 registros)
+│   │   └── WA_Fn-UseC_-Telco-Customer-Churn.csv  ← Dataset clasificación (7,043 registros)
+│   └── processed/                                 ← Generado automáticamente por los notebooks
 ├── notebooks/
 │   ├── 🏥 REGRESIÓN — Medical Insurance
 │   │   ├── 01_EDA.ipynb
@@ -27,9 +32,15 @@ ml_supervisado/
 │       ├── 08_Churn_Feature_Engineering.ipynb
 │       ├── 09_Churn_Model_Training.ipynb
 │       └── 10_Churn_Validation.ipynb
-├── models/                                        ← .pkl generados por notebooks
+├── models/                                        ← Archivos .pkl generados por los notebooks
+│   ├── linear_regression.pkl
+│   ├── knn_regressor.pkl
+│   ├── random_forest.pkl
+│   ├── churn_logistic.pkl
+│   ├── churn_knn.pkl
+│   └── churn_rf.pkl
 ├── app/
-│   └── app.py                                     ← Streamlit unificado
+│   └── app.py                                     ← Dashboard Streamlit unificado
 ├── requirements.txt
 └── README.md
 ```
@@ -38,39 +49,69 @@ ml_supervisado/
 
 ## 🏥 Parte 1: Regresión — Medical Insurance
 
-**Dataset:** Medical Cost Personal Dataset (1,338 registros, 7 columnas)  
-**Target:** `charges` (costo médico anual en USD)
+**Dataset:** Medical Cost Personal Dataset  
+**Registros:** 1,338 · **Variables:** 7 · **Target:** `charges` (costo médico anual en USD)
 
-| Notebook | Contenido |
-|----------|-----------|
-| `01_EDA` | Distribuciones, correlaciones, análisis por smoker/región |
-| `02_Preprocessing` | Limpieza, OHE, LabelEncoding, StandardScaler, split 80/20 |
-| `03_Feature_Engineering` | Variance Threshold, MI, SelectKBest, LASSO, RF Importance |
-| `04_Model_Training` | Ridge, KNN, Random Forest + GridSearch/RandomSearch |
-| `05_Validation` | CV KFold-5, curvas de aprendizaje, reporte final |
+### Variables del dataset
+| Variable | Tipo | Descripción |
+|----------|------|-------------|
+| `age` | Numérica | Edad del beneficiario |
+| `sex` | Categórica | Género (female / male) |
+| `bmi` | Numérica | Índice de masa corporal |
+| `children` | Numérica | Número de hijos cubiertos |
+| `smoker` | Binaria | Fumador (yes / no) |
+| `region` | Categórica | Región residencial en EE.UU. |
+| `charges` | **TARGET** | Costos médicos anuales (USD) |
 
-**Modelos:** Ridge Regression · KNN Regressor · Random Forest  
-**Target transform:** `log1p(charges)` → `expm1()` para métricas en $  
-**Métricas:** RMSE, MAE, R²
+### Flujo de Notebooks
+
+| Notebook | Contenido principal |
+|----------|---------------------|
+| `01_EDA` | Distribuciones, skewness, Q-Q plots, correlaciones Pearson/Spearman, ANOVA, impacto de `smoker` en charges. Sin valores faltantes. |
+| `02_Preprocessing` | Eliminación de duplicados, validación de rangos, OHE para `sex`, `region`, `bmi_category`, `age_group`; Label Encoding para `smoker`; features de interacción `bmi_smoker` y `age_smoker`; transformación `log1p(charges)`; split 80/20. |
+| `03_Feature_Engineering` | Variance Threshold, Mutual Information (regresión), Prueba F (SelectKBest), RF Importance, LASSO (L1). Ranking combinado para selección final. |
+| `04_Model_Training` | Ridge (GridSearchCV sobre `alpha`), KNN Regressor (curva K vs RMSE + GridSearchCV), Random Forest (RandomizedSearchCV + fine-tune GridSearch). Métricas en escala original con `expm1()`. |
+| `05_Validation` | KFold-5 y KFold-10 CV, boxplots de distribución de métricas, curvas de aprendizaje, análisis de residuales, tabla comparativa final. |
+
+### Modelos entrenados
+| Modelo | Hiperparámetro principal | Búsqueda |
+|--------|--------------------------|----------|
+| Ridge Regression | `alpha` ∈ {0.001 … 1000} | GridSearchCV |
+| KNN Regressor | `k`, `weights`, `metric` | GridSearchCV |
+| Random Forest | `n_estimators`, `max_depth`, `min_samples_*`, `max_features` | RandomizedSearch + GridSearch |
+
+**Transform:** `log1p(charges)` para entrenamiento → `expm1()` para métricas en USD  
+**Métricas:** RMSE · MAE · MSE · R²  
+**Validación:** KFold-5 y KFold-10 con intervalos de confianza
 
 ---
 
 ## 📡 Parte 2: Clasificación — Telco Customer Churn
 
-**Dataset:** IBM Telco Customer Churn (7,043 registros, 21 columnas)  
-**Target:** `Churn` (Yes=1 / No=0) — Clasificación binaria desbalanceada (~27% Churn)
+**Dataset:** IBM Telco Customer Churn  
+**Registros:** 7,043 · **Variables:** 21 · **Target:** `Churn` (Yes=1 / No=0)  
+**Desbalance:** ~26.5% Churn=Yes / ~73.5% Churn=No
 
-| Notebook | Contenido |
-|----------|-----------|
-| `06_Churn_EDA` | Análisis de desbalance, Chi², tasa de churn por variable |
-| `07_Churn_Preprocessing` | Codificación binaria/ternaria/OHE, split estratificado |
-| `08_Churn_Feature_Engineering` | MI Classif., Chi², RF Importance, Logistic L1 |
-| `09_Churn_Model_Training` | LogReg, KNN, Random Forest + GridSearch |
-| `10_Churn_Validation` | StratifiedKFold-5, ROC, PR-AUC, análisis de umbral |
+### Flujo de Notebooks
 
-**Modelos:** Logistic Regression (L2) · KNN Classifier · Random Forest  
+| Notebook | Contenido principal |
+|----------|---------------------|
+| `06_Churn_EDA` | Análisis del desbalance de clases (ratio 2.7:1), distribuciones de `tenure`, `MonthlyCharges`, `TotalCharges` por clase, tasa de Churn por variable categórica, Test Chi-cuadrado para significancia, análisis de variables clave (`Contract`, `tenure`). |
+| `07_Churn_Preprocessing` | Conversión de `TotalCharges` a numérico, imputación de 11 nulos (clientes con tenure=0), codificación binaria Yes/No→1/0, OHE para `Contract`, `InternetService`, `PaymentMethod`, `tenure_group`; features derivadas `num_services`, `is_monthly_contract`, `no_value_added`; split 80/20 **estratificado** por Churn. |
+| `08_Churn_Feature_Engineering` | Variance Threshold, Mutual Information (clasificación), Chi-cuadrado (SelectKBest), RF Importance con `class_weight='balanced'`, Logistic Regression L1. Ranking combinado normalizado con score final promedio. |
+| `09_Churn_Model_Training` | Logistic Regression (GridSearch sobre `C`, `penalty`), KNN Classifier (curva K vs F1 + GridSearch), Random Forest (RandomizedSearch n_iter=30 + fine-tune GridSearch). Estrategia `class_weight='balanced'` en todos los modelos. |
+| `10_Churn_Validation` | StratifiedKFold-5 y -10 CV, matrices de confusión comparativas, curvas ROC y Precision-Recall, learning curves, análisis de umbral óptimo para maximizar Recall sin sacrificar Precision. |
+
+### Modelos entrenados
+| Modelo | Hiperparámetro principal | Búsqueda |
+|--------|--------------------------|----------|
+| Logistic Regression (L2) | `C` ∈ {0.001 … 10}, `penalty` ∈ {l1, l2} | GridSearchCV |
+| KNN Classifier | `k` (impar), `weights`, `metric` | GridSearchCV |
+| Random Forest | `n_estimators`, `max_depth`, `min_samples_*`, `max_features`, `class_weight` | RandomizedSearch + GridSearch |
+
 **Desbalance:** `class_weight='balanced'` en todos los modelos  
-**Métricas:** F1-Score, AUC-ROC, Precision, Recall, PR-AUC
+**Métricas:** F1-Score · AUC-ROC · Precision · Recall · PR-AUC · Accuracy  
+**Validación:** StratifiedKFold-5 y -10, análisis de umbral de decisión
 
 ---
 
@@ -80,31 +121,33 @@ App unificada con selector de tarea (Regresión / Clasificación):
 
 | Vista | Descripción |
 |-------|-------------|
-| 🎯 Predicción Individual | Formulario interactivo + factores de riesgo |
-| 📂 Predicción por Lote | Upload CSV + descarga resultados |
-| 📊 Dashboard Modelos | Métricas comparativas + CV con error bars |
-| 🔍 Feature Importance | Gráfico RF + barra de importancia (✅ checklist) |
-| 📈 Análisis Dataset | Distribuciones, correlación, segmentación |
+| 🎯 Predicción Individual | Formulario interactivo con factores de riesgo en tiempo real |
+| 📂 Predicción por Lote | Upload CSV + descarga de resultados |
+| 📊 Dashboard Modelos | Métricas comparativas + CV con barras de error |
+| 🔍 Feature Importance | Gráfico de importancia RF (✅ checklist del taller) |
+| 📈 Análisis Dataset | Distribuciones, correlación, segmentación por variables clave |
 
-### Ejecutar localmente:
+### Ejecutar localmente
 ```bash
 pip install -r requirements.txt
 streamlit run app/app.py
 ```
 
-### Ejecutar en Streamlit Cloud:
+### Desplegar en Streamlit Cloud
+```
 1. Haz fork de este repositorio
-2. Ve a [share.streamlit.io](https://share.streamlit.io)
-3. Conecta tu repo → Main file: `app/app.py`
+2. Ve a https://share.streamlit.io
+3. Conecta tu repo → Main file: app/app.py
+```
 
 ---
 
-## 📋 Orden de Ejecución de Notebooks
+## 📋 Orden de Ejecución
 
 ```
 1. Coloca los datasets en data/raw/
-2. Ejecuta 01 → 02 → 03 → 04 → 05   (Regresión)
-3. Ejecuta 06 → 07 → 08 → 09 → 10   (Clasificación)
+2. Ejecuta: 01 → 02 → 03 → 04 → 05   (Regresión — Medical Insurance)
+3. Ejecuta: 06 → 07 → 08 → 09 → 10   (Clasificación — Telco Churn)
 4. streamlit run app/app.py
 ```
 
@@ -114,15 +157,17 @@ streamlit run app/app.py
 
 - [x] Repositorio con carpetas `/data`, `/notebooks`, `/app`
 - [x] 10 notebooks comentados con conclusiones por sección
-- [x] `requirements.txt` completo
-- [x] 3+ modelos por tarea con GridSearch/RandomSearch
-- [x] EDA: correlaciones, valores faltantes, distribuciones
-- [x] Preprocesamiento: OHE + LabelEncoding + StandardScaler
-- [x] Ingeniería de características: 4 métodos de selección
-- [x] Cross-Validation + métricas en Test set
-- [x] Dashboard con Feature Importance (gráfico RF)
-- [x] Predicción individual + predicción por lote CSV
-- [x] Desbalance de clases: `class_weight='balanced'`
+- [x] `requirements.txt` completo para replicar el entorno
+- [x] 3 modelos por tarea con búsqueda de hiperparámetros (GridSearch + RandomizedSearch)
+- [x] EDA completo: correlaciones, valores faltantes, distribuciones, sesgo
+- [x] Preprocesamiento: OHE + Label Encoding + StandardScaler (fit solo en train)
+- [x] Ingeniería de características: 4–5 métodos de selección por tarea
+- [x] Cross-Validation robusta (KFold / StratifiedKFold) + métricas en Test set
+- [x] Dashboard con gráfico de Feature Importance (RF)
+- [x] Predicción individual + predicción por lote (CSV)
+- [x] Manejo de desbalance de clases: `class_weight='balanced'`
+- [x] Transformación logarítmica del target en regresión (`log1p` / `expm1`)
+- [x] Análisis de umbral óptimo para clasificación (Recall vs Precision)
 
 ---
 
