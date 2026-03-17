@@ -90,10 +90,9 @@ def prep_ins(row_dict, scaler, feats):
                        drop_first=False, dtype=int)
     for f in feats:
         if f not in d.columns: d[f] = 0
-    X   = d[feats].copy()
-    Xs  = X.copy()
-    num = [c for c in ['age','bmi','children','bmi_smoker','age_smoker'] if c in X.columns]
-    Xs[num] = scaler.transform(X[num])
+    X  = d[feats].copy()
+    # scaler was fit on all selected features — pass full X
+    Xs = pd.DataFrame(scaler.transform(X), columns=X.columns, index=X.index)
     return Xs, X
 
 def prep_churn(row_dict, scaler, feats):
@@ -126,10 +125,8 @@ def prep_churn(row_dict, scaler, feats):
     for f in feats:
         if f not in d.columns: d[f] = 0
     X  = d[feats].copy()
-    Xs = X.copy()
-    num = [c for c in ['tenure','MonthlyCharges','TotalCharges','avg_monthly_charge','num_services']
-           if c in X.columns]
-    if num: Xs[num] = scaler.transform(X[num])
+    # scaler was fit on all selected features — pass full X
+    Xs = pd.DataFrame(scaler.transform(X), columns=X.columns, index=X.index)
     return Xs, X
 
 # ══════════════════════════════════════════════════════════
