@@ -28,5 +28,29 @@
     "age_smoker"
   ],
   "target": "log_charges",
-  "n_features": 19
+  "n_features": 19,
+  "selected_features": [
+    "bmi_smoker",
+    "age",
+    "smoker_enc",
+    "age_smoker",
+    "age_group_senior",
+    "age_group_young",
+    "bmi"
+  ],
+  "eliminated_features": [
+    "children",
+    "sex_female",
+    "sex_male",
+    "region_northeast",
+    "region_northwest",
+    "region_southeast",
+    "region_southwest",
+    "bmi_category_underweight",
+    "bmi_category_normal",
+    "bmi_category_overweight",
+    "bmi_category_obese",
+    "age_group_middle"
+  ],
+  "n_selected": 7
 }
