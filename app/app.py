@@ -16,9 +16,22 @@ import joblib, json, os
 st.set_page_config(page_title="ML Supervisado · EAFIT", page_icon="🤖",
                    layout="wide", initial_sidebar_state="expanded")
 
-BASE   = os.path.dirname(os.path.abspath(__file__))
-MODELS = os.path.join(BASE, '..', 'models')
-DATA   = os.path.join(BASE, '..', 'data', 'processed')
+# ── Rutas compatibles local + Streamlit Cloud ────────────
+# Streamlit Cloud ejecuta desde la raíz del repo.
+# __file__ puede ser app/app.py (local) o /mount/src/.../app/app.py (Cloud).
+# Subimos hasta encontrar la carpeta raíz del repo (la que contiene /models).
+def _find_repo_root():
+    candidate = os.path.dirname(os.path.abspath(__file__))
+    for _ in range(4):  # máximo 4 niveles hacia arriba
+        if os.path.isdir(os.path.join(candidate, 'models')):
+            return candidate
+        candidate = os.path.dirname(candidate)
+    # Fallback: directorio de trabajo actual (raíz en Streamlit Cloud)
+    return os.getcwd()
+
+ROOT   = _find_repo_root()
+MODELS = os.path.join(ROOT, 'models')
+DATA   = os.path.join(ROOT, 'data', 'processed')
 
 # ── CSS ──────────────────────────────────────────────────
 st.markdown("""<style>
@@ -276,7 +289,7 @@ if is_reg:
     elif nav=="📈 Análisis Dataset":
         st.markdown("## 📈 EDA — Medical Insurance")
         try:
-            df_r=pd.read_csv(os.path.join(BASE,'../data/raw/insurance.csv'))
+            df_r=pd.read_csv(os.path.join(ROOT,'data','raw','insurance.csv'))
             t1,t2,t3=st.tabs(["Distribuciones","Correlación","Segmentación"])
             with t1:
                 col=st.selectbox("Variable:",["charges","age","bmi","children"])
@@ -456,7 +469,7 @@ else:
     elif nav=="📈 Análisis Dataset":
         st.markdown("## 📈 EDA — Telco Churn")
         try:
-            df_r=pd.read_csv(os.path.join(BASE,'../data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv'))
+            df_r=pd.read_csv(os.path.join(ROOT,'data','raw','WA_Fn-UseC_-Telco-Customer-Churn.csv'))
             df_r['TotalCharges']=pd.to_numeric(df_r['TotalCharges'],errors='coerce').fillna(0)
             t1,t2,t3,t4=st.tabs(["Churn Rate","Numéricas","Correlación","Segmentos"])
             with t1:
