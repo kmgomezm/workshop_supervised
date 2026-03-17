@@ -79,55 +79,92 @@ def load_raw(name):
 # ── Preprocessing ─────────────────────────────────────────
 def prep_ins(row_dict, scaler, feats):
     d = pd.DataFrame([row_dict])
-    d['smoker_enc']   = (d['smoker'] == 'yes').astype(int)
-    d['bmi_smoker']   = d['bmi'] * d['smoker_enc']
-    d['age_smoker']   = d['age'] * d['smoker_enc']
+    # Normalizar texto
+    for c in ['sex','smoker','region']:
+        if c in d: d[c] = d[c].str.lower().str.strip()
+    # Features de interacción (igual que Notebook 02)
+    d['smoker_enc'] = (d['smoker'] == 'yes').astype(int)
+    d['bmi_smoker'] = d['bmi'] * d['smoker_enc']
+    d['age_smoker'] = d['age'] * d['smoker_enc']
     d['bmi_category'] = pd.cut(d['bmi'], bins=[0,18.5,24.9,29.9,100],
                                 labels=['underweight','normal','overweight','obese'])
     d['age_group']    = pd.cut(d['age'], bins=[0,30,45,100],
                                 labels=['young','middle','senior'])
     d = pd.get_dummies(d, columns=['sex','region','bmi_category','age_group'],
                        drop_first=False, dtype=int)
+    # Scaler fue entrenado SOLO en estas 5 columnas (Notebook 02)
+    num_cols = ['age','bmi','children','bmi_smoker','age_smoker']
+    num_present = [c for c in num_cols if c in d.columns]
+    d[num_present] = scaler.transform(d[num_present])
+    # Ahora seleccionar features (algunas pueden haber sido eliminadas en NB03)
     for f in feats:
         if f not in d.columns: d[f] = 0
-    X  = d[feats].copy()
-    # scaler was fit on all selected features — pass full X
-    Xs = pd.DataFrame(scaler.transform(X), columns=X.columns, index=X.index)
-    return Xs, X
+    Xs = d[feats].copy()   # scaled version
+    # Para RF (no necesita scaling): reconstruir sin escalar
+    d2 = pd.DataFrame([row_dict])
+    for c in ['sex','smoker','region']:
+        if c in d2: d2[c] = d2[c].str.lower().str.strip()
+    d2['smoker_enc'] = (d2['smoker'] == 'yes').astype(int)
+    d2['bmi_smoker'] = d2['bmi'] * d2['smoker_enc']
+    d2['age_smoker'] = d2['age'] * d2['smoker_enc']
+    d2['bmi_category'] = pd.cut(d2['bmi'], bins=[0,18.5,24.9,29.9,100],
+                                 labels=['underweight','normal','overweight','obese'])
+    d2['age_group']    = pd.cut(d2['age'], bins=[0,30,45,100],
+                                 labels=['young','middle','senior'])
+    d2 = pd.get_dummies(d2, columns=['sex','region','bmi_category','age_group'],
+                        drop_first=False, dtype=int)
+    for f in feats:
+        if f not in d2.columns: d2[f] = 0
+    Xr = d2[feats].copy()  # raw (unscaled) version
+    return Xs, Xr
 
-def prep_churn(row_dict, scaler, feats):
+def _build_churn_df(row_dict):
+    """Construye el DataFrame de features para churn (sin escalar)."""
     d = pd.DataFrame([row_dict])
-    d['Partner_enc']         = (d.get('Partner', pd.Series(['No'])) == 'Yes').astype(int)
-    d['Dependents_enc']      = (d.get('Dependents', pd.Series(['No'])) == 'Yes').astype(int)
-    d['PhoneService_enc']    = (d.get('PhoneService', pd.Series(['No'])) == 'Yes').astype(int)
-    d['PaperlessBilling_enc']= (d.get('PaperlessBilling', pd.Series(['No'])) == 'Yes').astype(int)
-    d['gender_enc']          = (d.get('gender', pd.Series(['Male'])) == 'Male').astype(int)
+    for c in d.select_dtypes('object').columns:
+        d[c] = d[c].str.strip()
+    d['TotalCharges'] = pd.to_numeric(d.get('TotalCharges', pd.Series([0])), errors='coerce').fillna(0)
+    d['Partner_enc']          = (d.get('Partner',          pd.Series(['No'])) == 'Yes').astype(int)
+    d['Dependents_enc']       = (d.get('Dependents',       pd.Series(['No'])) == 'Yes').astype(int)
+    d['PhoneService_enc']     = (d.get('PhoneService',     pd.Series(['No'])) == 'Yes').astype(int)
+    d['PaperlessBilling_enc'] = (d.get('PaperlessBilling', pd.Series(['No'])) == 'Yes').astype(int)
+    d['gender_enc']           = (d.get('gender',           pd.Series(['Male'])) == 'Male').astype(int)
     tv = ['MultipleLines','OnlineSecurity','OnlineBackup','DeviceProtection',
           'TechSupport','StreamingTV','StreamingMovies']
     for c in tv:
         d[c+'_enc'] = (d.get(c, pd.Series(['No'])) == 'Yes').astype(int)
     ohe = ['Contract','InternetService','PaymentMethod']
-    if 'tenure' in d.columns:
-        d['tenure_group']       = pd.cut(d['tenure'], bins=[0,12,24,48,72],
-            labels=['new_0_12','medium_12_24','loyal_24_48','champion_48_72'], include_lowest=True)
-        tc = pd.to_numeric(d.get('TotalCharges', pd.Series([0])), errors='coerce').fillna(0)
-        d['avg_monthly_charge'] = np.where(d['tenure']>0, tc/d['tenure'], d.get('MonthlyCharges',0))
-        d['num_services']       = sum(d[c+'_enc'] for c in tv if c+'_enc' in d.columns)
-        d['is_monthly_contract']= (d.get('Contract', pd.Series([''])) == 'Month-to-month').astype(int)
-        d['is_new_customer']    = (d['tenure'] <= 6).astype(int)
-        d['is_fiber_optic']     = (d.get('InternetService', pd.Series([''])) == 'Fiber optic').astype(int)
-        d['no_value_added']     = ((d.get('OnlineSecurity', pd.Series(['No'])) == 'No') &
-                                   (d.get('TechSupport',    pd.Series(['No'])) == 'No') &
-                                   (d.get('OnlineBackup',   pd.Series(['No'])) == 'No')).astype(int)
-        ohe.append('tenure_group')
+    tenure = float(d['tenure'].iloc[0]) if 'tenure' in d.columns else 0
+    mc     = float(d['MonthlyCharges'].iloc[0]) if 'MonthlyCharges' in d.columns else 0
+    tc     = float(d['TotalCharges'].iloc[0])
+    d['avg_monthly_charge'] = tc / tenure if tenure > 0 else mc
+    d['num_services']        = sum(int((d.get(c, pd.Series(['No'])) == 'Yes').iloc[0]) for c in tv)
+    d['is_monthly_contract'] = int(d.get('Contract', pd.Series([''])). iloc[0] == 'Month-to-month')
+    d['is_new_customer']     = int(tenure <= 6)
+    d['is_fiber_optic']      = int(d.get('InternetService', pd.Series([''])).iloc[0] == 'Fiber optic')
+    d['no_value_added']      = int(
+        d.get('OnlineSecurity', pd.Series(['No'])).iloc[0] == 'No' and
+        d.get('TechSupport',    pd.Series(['No'])).iloc[0] == 'No' and
+        d.get('OnlineBackup',   pd.Series(['No'])).iloc[0] == 'No'
+    )
+    d['tenure_group'] = pd.cut(pd.Series([tenure]), bins=[0,12,24,48,72],
+        labels=['new_0_12','medium_12_24','loyal_24_48','champion_48_72'], include_lowest=True)
+    ohe.append('tenure_group')
     d = pd.get_dummies(d, columns=[c for c in ohe if c in d.columns],
                        drop_first=False, dtype=int)
+    return d
+
+def prep_churn(row_dict, scaler, feats):
+    d  = _build_churn_df(row_dict)
     for f in feats:
         if f not in d.columns: d[f] = 0
-    X  = d[feats].copy()
-    # scaler was fit on all selected features — pass full X
-    Xs = pd.DataFrame(scaler.transform(X), columns=X.columns, index=X.index)
-    return Xs, X
+    Xr = d[feats].copy()   # unscaled — para RF
+    Xs = Xr.copy()
+    # Scaler fue entrenado SOLO en estas columnas (Notebook 07)
+    num_cols = ['tenure','MonthlyCharges','TotalCharges','avg_monthly_charge','num_services']
+    num_present = [c for c in num_cols if c in Xs.columns]
+    Xs[num_present] = scaler.transform(Xs[num_present])
+    return Xs, Xr
 
 # ══════════════════════════════════════════════════════════
 # UI
