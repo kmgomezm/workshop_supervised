@@ -66,7 +66,9 @@ def load_ins():
              'Reg. Lineal':joblib.load(os.path.join(MODELS,'linear_regression.pkl')),
              'KNN':joblib.load(os.path.join(MODELS,'knn_regressor.pkl'))}
         return m,joblib.load(os.path.join(MODELS,'scaler.pkl')),joblib.load(os.path.join(MODELS,'selected_features.pkl'))
-    except: return None,None,None
+    except Exception as e:
+        st.error(f"❌ Error cargando modelos de Insurance: {e}")
+        return None,None,None
 
 @st.cache_resource
 def load_churn():
@@ -75,7 +77,9 @@ def load_churn():
              'Log. Regression':joblib.load(os.path.join(MODELS,'churn_logistic.pkl')),
              'KNN':joblib.load(os.path.join(MODELS,'churn_knn.pkl'))}
         return m,joblib.load(os.path.join(MODELS,'churn_scaler.pkl')),joblib.load(os.path.join(MODELS,'churn_selected_features.pkl'))
-    except: return None,None,None
+    except Exception as e:
+        st.error(f"❌ Error cargando modelos de Churn: {e}")
+        return None,None,None
 
 @st.cache_data
 def load_json(f):
