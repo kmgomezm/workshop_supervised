@@ -148,7 +148,7 @@ streamlit run app/app.py
 1. Coloca los datasets en data/raw/
 2. Ejecuta: 01 → 02 → 03 → 04 → 05   (Regresión — Medical Insurance)
 3. Ejecuta: 06 → 07 → 08 → 09 → 10   (Clasificación — Telco Churn)
-4. streamlit run app/app.py
+4. streamlit run app/app.py (para local)
 ```
 
 ---
