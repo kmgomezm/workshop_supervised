@@ -1,4 +1,4 @@
-# 🤖 ML Supervisado · EAFIT 2026
+# ML Supervisado · EAFIT 2026
 
 **Taller 02 — Aprendizaje Supervisado: Regresión & Clasificación**  
 Maestría en Ciencia de Datos · Docente: Jorge I. Padilla-Buriticá · Período 2026-1
@@ -10,7 +10,7 @@ Maestría en Ciencia de Datos · Docente: Jorge I. Padilla-Buriticá · Período
 
 ---
 
-## 🗂️ Estructura del Repositorio
+## Estructura del Repositorio
 
 ```
 ml_supervisado/
@@ -20,13 +20,13 @@ ml_supervisado/
 │   │   └── WA_Fn-UseC_-Telco-Customer-Churn.csv  ← Dataset clasificación (7,043 registros)
 │   └── processed/                                 ← Generado automáticamente por los notebooks
 ├── notebooks/
-│   ├── 🏥 REGRESIÓN — Medical Insurance
+│   ├──  REGRESIÓN — Medical Insurance
 │   │   ├── 01_EDA.ipynb
 │   │   ├── 02_Preprocessing.ipynb
 │   │   ├── 03_Feature_Engineering.ipynb
 │   │   ├── 04_Model_Training.ipynb
 │   │   └── 05_Validation.ipynb
-│   └── 📡 CLASIFICACIÓN — Telco Churn
+│   └──  CLASIFICACIÓN — Telco Churn
 │       ├── 06_Churn_EDA.ipynb
 │       ├── 07_Churn_Preprocessing.ipynb
 │       ├── 08_Churn_Feature_Engineering.ipynb
@@ -47,7 +47,7 @@ ml_supervisado/
 
 ---
 
-## 🏥 Parte 1: Regresión — Medical Insurance
+## Parte 1: Regresión — Medical Insurance
 
 **Dataset:** Medical Cost Personal Dataset  
 **Registros:** 1,338 · **Variables:** 7 · **Target:** `charges` (costo médico anual en USD)
@@ -86,7 +86,7 @@ ml_supervisado/
 
 ---
 
-## 📡 Parte 2: Clasificación — Telco Customer Churn
+## Parte 2: Clasificación — Telco Customer Churn
 
 **Dataset:** IBM Telco Customer Churn  
 **Registros:** 7,043 · **Variables:** 21 · **Target:** `Churn` (Yes=1 / No=0)  
@@ -115,17 +115,17 @@ ml_supervisado/
 
 ---
 
-## 🚀 Dashboard Interactivo (Streamlit)
+## Dashboard Interactivo (Streamlit)
 
 App unificada con selector de tarea (Regresión / Clasificación):
 
 | Vista | Descripción |
 |-------|-------------|
-| 🎯 Predicción Individual | Formulario interactivo con factores de riesgo en tiempo real |
-| 📂 Predicción por Lote | Upload CSV + descarga de resultados |
-| 📊 Dashboard Modelos | Métricas comparativas + CV con barras de error |
-| 🔍 Feature Importance | Gráfico de importancia RF (✅ checklist del taller) |
-| 📈 Análisis Dataset | Distribuciones, correlación, segmentación por variables clave |
+| Predicción Individual | Formulario interactivo con factores de riesgo en tiempo real |
+| Predicción por Lote | Upload CSV + descarga de resultados |
+| Dashboard Modelos | Métricas comparativas + CV con barras de error |
+| Feature Importance | Gráfico de importancia RF (checklist del taller) |
+| Análisis Dataset | Distribuciones, correlación, segmentación por variables clave |
 
 ### Ejecutar localmente
 ```bash
@@ -142,7 +142,7 @@ streamlit run app/app.py
 
 ---
 
-## 📋 Orden de Ejecución
+## Orden de Ejecución
 
 ```
 1. Coloca los datasets en data/raw/
@@ -153,7 +153,7 @@ streamlit run app/app.py
 
 ---
 
-## ✅ Checklist del Taller
+## Checklist del Taller
 
 - [x] Repositorio con carpetas `/data`, `/notebooks`, `/app`
 - [x] 10 notebooks comentados con conclusiones por sección
