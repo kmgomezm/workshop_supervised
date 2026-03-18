@@ -169,6 +169,4 @@ streamlit run app/app.py
 - [x] Transformación logarítmica del target en regresión (`log1p` / `expm1`)
 - [x] Análisis de umbral óptimo para clasificación (Recall vs Precision)
 
----
 
-> *"In God we trust, all others must bring data."* — W. Edwards Deming
