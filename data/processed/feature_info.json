@@ -36,10 +36,10 @@
     "age_smoker",
     "age_group_senior",
     "age_group_young",
+    "children",
     "bmi"
   ],
   "eliminated_features": [
-    "children",
     "sex_female",
     "sex_male",
     "region_northeast",
@@ -52,5 +52,5 @@
     "bmi_category_obese",
     "age_group_middle"
   ],
-  "n_selected": 7
+  "n_selected": 8
 }
